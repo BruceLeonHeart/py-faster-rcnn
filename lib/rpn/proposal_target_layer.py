@@ -57,7 +57,7 @@ class ProposalTargetLayer(caffe.Layer):
 
         num_images = 1
         rois_per_image = cfg.TRAIN.BATCH_SIZE / num_images
-        fg_rois_per_image = np.round(cfg.TRAIN.FG_FRACTION * rois_per_image)
+        fg_rois_per_image = np.round(cfg.TRAIN.FG_FRACTION * rois_per_image).astype(np.int)
 
         # Sample rois with classification labels and bounding box regression
         # targets
@@ -121,9 +121,10 @@ def _get_bbox_regression_labels(bbox_target_data, num_classes):
     bbox_inside_weights = np.zeros(bbox_targets.shape, dtype=np.float32)
     inds = np.where(clss > 0)[0]
     for ind in inds:
+        ind = int(ind)
         cls = clss[ind]
-        start = 4 * cls
-        end = start + 4
+        start = int(4 * cls)
+        end = int(start + 4)
         bbox_targets[ind, start:end] = bbox_target_data[ind, 1:]
         bbox_inside_weights[ind, start:end] = cfg.TRAIN.BBOX_INSIDE_WEIGHTS
     return bbox_targets, bbox_inside_weights
@@ -174,7 +175,7 @@ def _sample_rois(all_rois, gt_boxes, fg_rois_per_image, rois_per_image, num_clas
     bg_rois_per_this_image = min(bg_rois_per_this_image, bg_inds.size)
     # Sample background regions without replacement
     if bg_inds.size > 0:
-        bg_inds = npr.choice(bg_inds, size=bg_rois_per_this_image, replace=False)
+        bg_inds = npr.choice(bg_inds, size=bg_rois_per_this_image, replace=False).astype(np.int)
 
     # The indices that we're selecting (both fg and bg)
     keep_inds = np.append(fg_inds, bg_inds)
